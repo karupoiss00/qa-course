@@ -75,7 +75,7 @@ void ltrim(std::string& s)
 TestResult RunTestCase(const string& input) 
 {
     istringstream iss(input);
-    int a, b, c;
+    string a, b, c;
     string expected_result;
     iss >> a >> b >> c;
 
@@ -83,7 +83,7 @@ TestResult RunTestCase(const string& input)
     
     ltrim(expected_result);
 
-    string command = "triangle.exe " + to_string(a) + " " + to_string(b) + " " + to_string(c);
+    string command = "triangle.exe " + a + " " + b + " " + c;
 
     FILE*  pipe = _popen(command.c_str(), "r");
 
@@ -105,6 +105,8 @@ TestResult RunTestCase(const string& input)
     _pclose(pipe);
 
     result.pop_back();
+
+    cout << result << " <> " << expected_result << endl;
 
     if (result != expected_result)
     {

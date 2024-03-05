@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <optional>
+#include <algorithm>
 
 using namespace std;
 
@@ -13,12 +14,12 @@ enum class TriangleType {
 
 struct Args
 {
-    int a;
-    int b;
-    int c;
+    double a;
+    double b;
+    double c;
 };
 
-TriangleType DetermineTriangleType(int a, int b, int c);
+TriangleType DetermineTriangleType(double a, double b, double c);
 optional<Args> ParseArgs(int argc, char* argv[]);
 
 int main(int argc, char* argv[]) 
@@ -32,10 +33,12 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    TriangleType type = DetermineTriangleType(args->a, args->b, args->c);
-
-    switch (type) 
+    try
     {
+        TriangleType type = DetermineTriangleType(args->a, args->b, args->c);
+
+        switch (type)
+        {
         case TriangleType::UNKNOWN:
             cout << "Не треугольник" << endl;
             break;
@@ -48,9 +51,21 @@ int main(int argc, char* argv[])
         case TriangleType::DEFAULT:
             cout << "Обычный" << endl;
             break;
+        }
     }
-
+    catch (exception const& e)
+    {
+        cout << e.what() << endl;
+    }
+    
     return 0;
+}
+
+string PrepareArgument(char* arg)
+{
+    string s(arg);
+    replace(s.begin(), s.end(), '.', ',');
+    return s;
 }
 
 optional<Args> ParseArgs(int argc, char* argv[])
@@ -61,26 +76,46 @@ optional<Args> ParseArgs(int argc, char* argv[])
         return nullopt;
     }
 
-    int a = stoi(argv[1]);
-    int b = stoi(argv[2]);
-    int c = stoi(argv[3]);
+    try
+    {
+        double a = stod(PrepareArgument(argv[1]));
+        double b = stod(PrepareArgument(argv[2]));
+        double c = stod(PrepareArgument(argv[3]));
 
-    return Args(a, b, c);
+        return Args(a, b, c);
+    }
+    catch (...)
+    {
+        cout << "Неизвестная ошибка" << endl;
+        return std::nullopt;
+    }
 }
 
-TriangleType DetermineTriangleType(int a, int b, int c)
+constexpr double EPSILON = 0.0000000001;
+
+inline double compare(double a, double b, double eps = EPSILON)
 {
-    if (a <= 0 || b <= 0 || c <= 0)
+    return fabs(a - b) < EPSILON;
+}
+
+TriangleType DetermineTriangleType(double a, double b, double c)
+{
+    if (a < 0 || b < 0 || c < 0)
+    {
+        throw std::invalid_argument("Неизвестная ошибка");
+    }
+
+    if (compare(a, 0) || compare(b, 0) || compare(c, 0))
     {
         return TriangleType::UNKNOWN;
     }
 
-    if (a == b && b == c)
+    if (compare(a, b) && compare(b, c))
     {
         return TriangleType::EQUILATERAL;
     }
 
-    if (a == b || b == c || a == c)
+    if (compare(a, b) || compare(b, c) || compare(a, c))
     {
         return TriangleType::ISOSCELES;
     }
